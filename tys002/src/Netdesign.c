@@ -274,7 +274,7 @@ main() {
 									ih->ver_ihl, // 版本 (4 bits) + 首部长度 (4 bits)
 									ih->tos,            // 服务类型(Type of service)
 									ntohs(ih->tlen),          // 总长(Total length)
-									ntohs(ih->identification),          //标识
+									ntohs(ih->identification),          //标识符
 									ih->ttl,			//TTL
 									ih->proto,          // 协议(Protocol)
 									ntohs(ih->crc)            // 首部校验和(Header checksum)
