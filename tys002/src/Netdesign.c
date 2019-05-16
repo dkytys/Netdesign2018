@@ -55,7 +55,17 @@ typedef struct udp_header {
 	u_short len;            // UDP数据包长度(Datagram length)
 	u_short crc;            // 校验和(Checksum)
 } udp_header;
-
+/* TCP 首部*/
+typedef struct tcp_header {
+	u_short sport;         //源端口号16bit
+	u_short dport;         //目的端口号16bit
+	u_int sequnum;         //序列号32bit
+	u_int acknum;         //确认号32bit
+	u_short headerlenandflag;  //前4位：TCP头长度；中6位：保留；后6位：标志位
+	u_short windowsize;         //窗口大小16bit
+	u_short checknum;         //检验和16bit
+	u_short spointer;         //紧急数据偏移量16bit
+} tcp_header;
 main() {
 	pcap_if_t *alldevs;
 	pcap_if_t *d;
@@ -75,6 +85,7 @@ main() {
 	char timestr[16];
 	ip_header *ih;
 	udp_header *uh;
+	tcp_header *th;
 	u_int ip_len;
 	u_short u_sport, u_dport;
 	u_short t_sport, t_dport;
@@ -241,6 +252,43 @@ main() {
 
 					}
 				}
+			}
+			if (ih->proto == 6) {
+							ip_len = (ih->ver_ihl & 0xf) * 4;
+							th = (tcp_header *) ((u_char*) ih + ip_len);
+							t_sport = ntohs(th->sport);
+							t_dport = ntohs(th->dport);
+							acknum = ntohs(th->acknum);
+							printf("\n");
+							printf(" ---------------TCP-------------------\n");
+							printf("数据包的时间戳：%s.%.6d  数据包长度： len:%d \n", timestr,
+									header->ts.tv_usec, header->len);
+							printf("源MAC : %02X-%02X-%02X-%02X-%02X-%02X--->",
+									eh->SrcMac[0], eh->SrcMac[1], eh->SrcMac[2],
+									eh->SrcMac[3], eh->SrcMac[4], eh->SrcMac[5]);
+							printf("目的MAC : %02X-%02X-%02X-%02X-%02X-%02X\n",
+									eh->DestMac[0], eh->DestMac[1], eh->DestMac[2],
+									eh->DestMac[3], eh->DestMac[4], eh->DestMac[5]);
+							printf(
+									"IP版本首部长度:%d\n服务类型:%d\n总长:%d\n标识:%d\n存活时间:%d\n协议:%d\n首部校验和:%d\n",
+									ih->ver_ihl, // 版本 (4 bits) + 首部长度 (4 bits)
+									ih->tos,            // 服务类型(Type of service)
+									ntohs(ih->tlen),          // 总长(Total length)
+									ntohs(ih->identification),          //标识符
+									ih->ttl,			//TTL
+									ih->proto,          // 协议(Protocol)
+									ntohs(ih->crc)            // 首部校验和(Header checksum)
+											);
+							printf("---------------------------------------------\n");
+							printf("TCP序列号:%d\n确认号:%d\n窗口大小:%d\n检验和:%d\n紧急数据偏移量:%d\n",
+									ntohs(th->sequnum), ntohs(th->acknum),
+									ntohs(th->windowsize), ntohs(th->checknum),
+									ntohs(th->spointer));
+							printf("TCP: %d.%d.%d.%d 端口号：%d  -> %d.%d.%d.%d 端口号：%d \n",
+									ih->saddr.byte1, ih->saddr.byte2, ih->saddr.byte3,
+									ih->saddr.byte4, t_sport, ih->daddr.byte1,
+									ih->daddr.byte2, ih->daddr.byte3, ih->daddr.byte4,
+									t_dport);
 			}
 		}
 
