@@ -66,6 +66,15 @@ typedef struct tcp_header {
 	u_short checknum;         //检验和16bit
 	u_short spointer;         //紧急数据偏移量16bit
 } tcp_header;
+/* ARP首部 */
+typedef struct arp_header {
+	u_short arp_htype;    //硬件类型
+	u_short arp_ptype;    //协议类型
+	u_char arp_hlen;         //硬件地址长度
+	u_char arp_plen;         //协议地址长度
+	u_char dmac[6];     //发端以太网地址
+	u_char smac[6];       //目的以太网地址
+} arp_header;
 main() {
 	pcap_if_t *alldevs;
 	pcap_if_t *d;
@@ -206,9 +215,9 @@ main() {
 			ih = (ip_header *) (pkt_data + 14); //以太网头部长度
 			if (ih->proto == 17) {
 				/* 获得UDP首部的位置 */
-				ip_len = (ih->ver_ihl & 0xf) * 4;
+				ip_len = (ih->ver_ihl & 0xf) *;  //获取UDP首部时，一直出错，无法正确打印UDP信息，头部获取的代码该如何调整呢？
 
-				uh = (udp_header *) ((u_char*) ih + ip_len);
+				uh = (udp_header *) (ih + ip_len);
 
 				/* 将网络字节序列转换成主机字节序列 */
 				u_sport = ntohs(uh->sport);
@@ -255,7 +264,6 @@ main() {
 			}
 			if (ih->proto == 6) {
 							ip_len = (ih->ver_ihl & 0xf) * 4;
-							th = (tcp_header *) ((u_char*) ih + ip_len);
 							t_sport = ntohs(th->sport);
 							t_dport = ntohs(th->dport);
 							acknum = ntohs(th->acknum);
